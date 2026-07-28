@@ -1,4 +1,5 @@
 import os
+import re
 import asyncio
 from aiohttp import web
 
@@ -16,39 +17,65 @@ from telegram.ext import (
 
 
 TOKEN = os.getenv("BOT_TOKEN")
+import re
+
 def clean_ocr_text(text):
-
-    # Keraksiz reklama va so'zlar
-    remove_words = [
-        "XUSH KELIBSIZ BONUS",
-        "PARIPESA",
-        "DEPOZITINGIZ",
-        "BONUS",
-    ]
-
-    for word in remove_words:
-        text = text.replace(word, "")
 
     # OCR xatolarini tuzatish
     fixes = {
         "Ochilmagan varaga": "Ochilmagan darvoza",
-        "BinincHi": "Birinchi",
-        "gol o'tkazib yuboruvchi": "Birinchi gol o'tkazib yuboruvchi",
+        "Totliq vaqt": "To'liq vaqt",
         "tadan ko'prog gol": "tadan ko'p gol",
-        "Stastika": "Statistika",
+        "Birinchi Birinchi": "Birinchi",
+        "Al tahlillari": "AI tahlillari",
+        "ichlar": "Ichki bo'lim",
     }
 
     for old, new in fixes.items():
         text = text.replace(old, new)
 
-    # Ortiqcha bo'sh qatorlarni kamaytirish
+    # Keraksiz satrlar
+    remove_contains = [
+        "pari",
+        "PARIPESA",
+        "BONUS",
+        "UZS",
+        "DEPOZIT",
+        "XUSH KELIBSIZ",
+        "Reytinglar Uchrashuvlar",
+        "AI tahlillari",
+        "@",
+        "Meneger",
+        "1 399",
+    ]
+
     lines = []
 
     for line in text.splitlines():
+
         line = line.strip()
 
-        if line:
-            lines.append(line)
+        if not line:
+            continue
+
+        # faqat 1-2 ta belgidan iborat satrlarni tashlab yuborish
+        if len(line) <= 2:
+            continue
+
+        skip = False
+
+        for word in remove_contains:
+            if word.lower() in line.lower():
+                skip = True
+                break
+
+        if skip:
+            continue
+
+        # ketma-ket bo'shliqlarni bittaga tushirish
+        line = re.sub(r"\s+", " ", line)
+
+        lines.append(line)
 
     return "\n".join(lines)
 
