@@ -17,8 +17,6 @@ from telegram.ext import (
 
 
 TOKEN = os.getenv("BOT_TOKEN")
-import re
-
 def clean_ocr_text(text):
 
     # OCR xatolarini tuzatish
@@ -34,7 +32,7 @@ def clean_ocr_text(text):
     for old, new in fixes.items():
         text = text.replace(old, new)
 
-    # Keraksiz satrlar
+    # Olib tashlanadigan satrlar
     remove_contains = [
         "pari",
         "PARIPESA",
@@ -47,6 +45,11 @@ def clean_ocr_text(text):
         "@",
         "Meneger",
         "1 399",
+        "HUN",
+        "OLING",
+        "INUS",
+        "So‘nggi",
+        "Bugun",
     ]
 
     lines = []
@@ -55,10 +58,15 @@ def clean_ocr_text(text):
 
         line = line.strip()
 
+        # OCR ikonkalari
+        for icon in ["Om", "OP", "Fa", "as", "®", "©", "ee", "Pm", "Bd", "Ss"]:
+            if line.startswith(icon + " "):
+                line = line[len(icon):].strip()
+
         if not line:
             continue
 
-        # faqat 1-2 ta belgidan iborat satrlarni tashlab yuborish
+        # Juda qisqa satrlarni tashlash
         if len(line) <= 2:
             continue
 
@@ -72,7 +80,7 @@ def clean_ocr_text(text):
         if skip:
             continue
 
-        # ketma-ket bo'shliqlarni bittaga tushirish
+        # Bo'shliqlarni tozalash
         line = re.sub(r"\s+", " ", line)
 
         lines.append(line)
